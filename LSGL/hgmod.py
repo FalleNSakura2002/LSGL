@@ -10,6 +10,11 @@ import matplotlib.pyplot as plt
 from torchvision import transforms
 import shutil
 
+# 统一路径将'\\'转为'/'
+def Unipath(path):
+    path = path.replace('\\','/')
+    return path
+
 # 检查文件夹是否存在
 def checkdoc(filepath):
     if not os.path.exists(filepath):
@@ -70,6 +75,9 @@ def imagesegment(inpimage,outimage,segmodel):
         tensor_to_PIL(predicted_semantic_map).save(outimage+imgname[-1])
     except:
         print('请先建立输出路径文件夹！')
+    
+    # 完成后回报
+    print('分割完成')
 
         
 # maskformer-swin-large-ade模型       

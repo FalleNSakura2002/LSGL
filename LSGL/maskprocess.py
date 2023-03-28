@@ -9,6 +9,15 @@ import os
 def getmask(maskpic):
   return Image.open(maskpic)
 
+# 统一路径将'\\'转为'/'
+def Unipath(userimage):
+    userimage = userimage.replace('\\','/')
+    return userimage
+def Unipaths(paths):
+    for path in paths:
+        path = path.replace('\\','/')
+    return paths
+
 # 展示遮罩
 def showmask(img, isgray=False):
   plt.axis("off")
@@ -51,6 +60,8 @@ def proceed(mask, inp, inp_typ, segmodel):
 
     # 遍历图片
     for maskpic in  mask_images_path:
+        # 路径转换
+        maskpic = Unipath(maskpic)
         
         # 输入图片进行处理
         mask = getmask(maskpic)
@@ -81,6 +92,7 @@ def proceed(mask, inp, inp_typ, segmodel):
         # 导入原图与背景图
         picpath = maskpic.split('/')
         picname = glob.glob(os.path.join(inp_file_path + picpath[-1]))
+        picname = Unipaths(picname)
         picdir = picname[0]
         img = cv2.imread(picdir)
         img = cv2.resize(img, (640, 480))
@@ -88,9 +100,9 @@ def proceed(mask, inp, inp_typ, segmodel):
         #     img = cv2.imread(picname)
         #     img = cv2.resize(img, (640, 480))
         if (inp_typ=="inp_database"):
-            back = cv2.imread("backg.png")
+            back = cv2.imread("./LSGL/img/backg.png")
         else:
-            back = cv2.imread("backg2.png")
+            back = cv2.imread("./LSGL/img/backg2.png")
 
         # 将mask图转化为灰度图
         mask = cv2.imread(maskpic,cv2.IMREAD_GRAYSCALE)
@@ -113,4 +125,7 @@ def proceed(mask, inp, inp_typ, segmodel):
         result = cv2.add(back,img)
 
         cv2.imwrite(maskpic, result)
+        
+    # 完成后回报
+    print('遮罩处理完成')
 

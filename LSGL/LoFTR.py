@@ -11,14 +11,19 @@ import shutil
 import math
 
 from PIL import Image
-from LoFTR.src.utils.plotting import make_matching_figure
-from LoFTR.src.loftr import LoFTR, default_cfg
+from src.utils.plotting import make_matching_figure
+from src.loftr import LoFTR, default_cfg
 
 # 进行算法配置
 # 可以进行“户外”“室内”的数据集选择.
 matcher = LoFTR(config=default_cfg)
-matcher.load_state_dict(torch.load("./LoFTR/weights/outdoor_ds.ckpt")['state_dict'])
+matcher.load_state_dict(torch.load("./LSGL/LoFTR/weights/outdoor_ds.ckpt")['state_dict'])
 matcher = matcher.eval().cuda()
+
+# 统一路径将'\\'转为'/'
+def Unipath(path):
+    path = path.replace('\\','/')
+    return path
 
 # 清理文件夹
 def clean(filepath):
@@ -42,33 +47,11 @@ def avg_score(mconf):
     avg = total_score / len(mconf)
     return avg
 
-# 求取欧氏距离RMSE,从某点出发，求取到任一点的距离
-# def Euc_distance(mkpts0, mkpts1):
-#     pre_act = 0
-#     for poi in range(len(mkpts0)):
-#         # 求取用户图像上特征点的欧氏距离
-#         for targetpoi_user in mkpts0:
-#             x = mkpts0[poi][0] - targetpoi_user[0]
-#             y = mkpts0[poi][1] - targetpoi_user[1]
-#             d_user = math.sqrt(x * x + y * y)
-#             print(d_user)
-#         # 求取数据库图像上特征点的欧氏距离
-#         for targetpoi_db in mkpts1:
-#             db_x = mkpts1[poi][0] - targetpoi_db[0]
-#             db_y = mkpts1[poi][1] - targetpoi_db[1]
-#             d_db = math.sqrt(db_x * db_x + db_y * db_y)
-#             print(d_db)
-#         # 求取误差值平方和
-#         pre_act = pre_act + pow((d_user-d_db),2)
-#     # 计算均方根误差
-#     RMSE = math.sqrt(pre_act/(len(mkpts0)-1)) # 要少除一个，跳过自身点
-#     print("RMSE为" + str(RMSE))
-#     return RMSE
-
 def Euc_distance(mkpts0, mkpts1):
     pre_act = 0
+    pre_act_deg = 0
     all_dis = 0
-    dll_deg = 0
+    all_deg = 0
     # 计算平均欧氏距离与欧式角度
     for i in range(len(mkpts0)):
         poi = mkpts0[i]
@@ -76,7 +59,7 @@ def Euc_distance(mkpts0, mkpts1):
         x = poi[0] - target[0]
         y = poi[1] - target[1]
         d = math.sqrt(x * x + y * y)
-        degree = math.atan(y,x)
+        degree = math.atan(y/x)
         # 取第一个点用于确认基准偏移
         all_dis += d
         all_deg += degree
@@ -90,7 +73,7 @@ def Euc_distance(mkpts0, mkpts1):
         x = poi[0] - target[0]
         y = poi[1] - target[1]
         d = math.sqrt(x * x + y * y)
-        degree = math.atan(y,x)
+        degree = math.atan(y/x)
         pre_act += pow((d-base_distance),2)
         pre_act_deg +=  pow((degree-base_degree),2)
     # 计算欧式距离的误差
@@ -147,18 +130,21 @@ def process(userpath, datapath, respath, mask_outpath):
     db_file_path = datapath
     user_file_path = userpath
     for dirpath, db_dirnames, filenames in os.walk(db_file_path):
+        print(db_dirnames)
         for db_dir in db_dirnames:
             db_images_path = glob.glob(os.path.join(db_file_path + db_dir + '/' + '*.png'))
-            print(db_dir)
+            print(db_images_path)
             user_images_path = glob.glob(os.path.join(user_file_path + '*.png'))
             mask_images_path = glob.glob(os.path.join(mask_outpath + '*.png'))
             for j in user_images_path:
+                j = Unipath(j)
                 m = 0
                 # 记录最佳评分
                 bestscore = 0
                 # 清理并建立输出文件夹
                 outputpath(respath, db_dir)
                 for i in db_images_path:
+                    i = Unipath(i)
 
                     # 读取图片
                     img0_raw = cv2.imread(j, cv2.IMREAD_GRAYSCALE)
@@ -199,3 +185,5 @@ def process(userpath, datapath, respath, mask_outpath):
                 
                 # 修改文件夹名称
                 os.rename(respath + str(db_dir)+ '/', respath + str(db_dir) + '_' + str(bestscore) + '/')
+                # 完成后回报
+                print('目标匹配完成')
