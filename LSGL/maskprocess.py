@@ -67,13 +67,8 @@ def proceed(mask, inp, inp_typ, segmodel):
         mask = getmask(maskpic)
         mask = np.array(mask.convert('L'))
         if segmodel == 'maskformer-swin-large-ade':
-            mask = np.where(mask[...,:] == 195, 255, mask)
-            mask = np.where(mask[...,:] == 163, 255, mask)
-            mask = np.where(mask[...,:] == 245, 255, mask)
-            mask = np.where(mask[...,:] == 243, 255, mask)
-            mask = np.where(mask[...,:] == 169, 255, mask)
-            mask = np.where(mask[...,:] == 197, 255, mask)
-            mask = np.where(mask[...,:] == 255, 255, 0)
+            mask = np.where(mask[...,:] == 255, 0, mask)
+            mask = np.where(mask[...,:] == 254, 255, 0)
         else:
             mask = np.where((mask[...,:] > 243)&(mask[...,:] < 255), 0, 255)
 
@@ -86,45 +81,45 @@ def proceed(mask, inp, inp_typ, segmodel):
         img = Image.fromarray(mask)
         img.save(maskpic)
 
-        #抠出黑底图像
-        import cv2
+        # #抠出黑底图像
+        # import cv2
 
-        # 导入原图与背景图
-        picpath = maskpic.split('/')
-        picname = glob.glob(os.path.join(inp_file_path + picpath[-1]))
-        picname = Unipaths(picname)
-        picdir = picname[0]
-        img = cv2.imread(picdir)
-        img = cv2.resize(img, (640, 480))
-        # except:
-        #     img = cv2.imread(picname)
-        #     img = cv2.resize(img, (640, 480))
-        if (inp_typ=="inp_database"):
-            back = cv2.imread("./LSGL/img/backg.png")
-        else:
-            back = cv2.imread("./LSGL/img/backg2.png")
+        # # 导入原图与背景图
+        # picpath = maskpic.split('/')
+        # picname = glob.glob(os.path.join(inp_file_path + picpath[-1]))
+        # picname = Unipaths(picname)
+        # picdir = picname[0]
+        # img = cv2.imread(picdir)
+        # img = cv2.resize(img, (640, 480))
+        # # except:
+        # #     img = cv2.imread(picname)
+        # #     img = cv2.resize(img, (640, 480))
+        # if (inp_typ=="inp_database"):
+        #     back = cv2.imread("./LSGL/img/backg.png")
+        # else:
+        #     back = cv2.imread("./LSGL/img/backg2.png")
 
-        # 将mask图转化为灰度图
-        mask = cv2.imread(maskpic,cv2.IMREAD_GRAYSCALE)
+        # # 将mask图转化为灰度图
+        # mask = cv2.imread(maskpic,cv2.IMREAD_GRAYSCALE)
 
-        # 将背景图resize到和原图一样的尺寸
-        back = cv2.resize(back,(img.shape[1],img.shape[0]))
+        # # 将背景图resize到和原图一样的尺寸
+        # back = cv2.resize(back,(img.shape[1],img.shape[0]))
 
-        # 这一步是将背景图中的遮罩部分抠出来，也就是人像部分的像素值为0
-        scenic_mask =~mask
-        scenic_mask = scenic_mask  / 255.0
-        back[:,:,0] = back[:,:,0] * scenic_mask
-        back[:,:,1] = back[:,:,1] * scenic_mask
-        back[:,:,2] = back[:,:,2] * scenic_mask
-        # 这部分是将遮罩外抠出来，也就是背景部分的像素值为0
-        mask = mask / 255.0
-        img[:,:,0] = img[:,:,0] * mask
-        img[:,:,1] = img[:,:,1] * mask
-        img[:,:,2] = img[:,:,2] * mask
-        #这里做个相加就可以实现合并
-        result = cv2.add(back,img)
+        # # 这一步是将背景图中的遮罩部分抠出来，也就是人像部分的像素值为0
+        # scenic_mask =~mask
+        # scenic_mask = scenic_mask  / 255.0
+        # back[:,:,0] = back[:,:,0] * scenic_mask
+        # back[:,:,1] = back[:,:,1] * scenic_mask
+        # back[:,:,2] = back[:,:,2] * scenic_mask
+        # # 这部分是将遮罩外抠出来，也就是背景部分的像素值为0
+        # mask = mask / 255.0
+        # img[:,:,0] = img[:,:,0] * mask
+        # img[:,:,1] = img[:,:,1] * mask
+        # img[:,:,2] = img[:,:,2] * mask
+        # #这里做个相加就可以实现合并
+        # result = cv2.add(back,img)
 
-        cv2.imwrite(maskpic, result)
+        # cv2.imwrite(maskpic, result)
         
     # 完成后回报
     print('遮罩处理完成')

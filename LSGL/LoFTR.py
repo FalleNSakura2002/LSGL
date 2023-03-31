@@ -47,6 +47,7 @@ def avg_score(mconf):
     avg = total_score / len(mconf)
     return avg
 
+# 求取欧氏距离与欧式方向
 def Euc_distance(mkpts0, mkpts1):
     pre_act = 0
     pre_act_deg = 0
@@ -80,16 +81,15 @@ def Euc_distance(mkpts0, mkpts1):
     RMSE_dis = math.sqrt(pre_act/len(mkpts0))
     RMSE_deg = math.sqrt(pre_act_deg/len(mkpts0))
     #计算总RMSE
-    RMSE = RMSE_dis / RMSE_deg
-    print("RMSE为" + str(RMSE))
+    RMSE = RMSE_dis * RMSE_deg
     return RMSE
 
 # 计算最佳成绩
-def getBestscore(before,after):
-    if before < after:
-        return after
+def getBestscore(before_score,before_RMSE,after_score,RMSE):
+    if before_score < after_score:
+        return after_score, RMSE
     else:
-        return before
+        return before_score, before_RMSE
 
 # 读取遮罩影像
 def readmask(mask_images_path, mkpts0, mkpts1, mconf):
@@ -117,9 +117,29 @@ def readmask(mask_images_path, mkpts0, mkpts1, mconf):
     mkpts0_tmp = np.delete(mkpts0,index,0)
     mkpts1_tmp = np.delete(mkpts1,index,0)
     mconf_tmp = np.delete(mconf,index)
-    print(mconf_tmp)
     mkpts = [mkpts0_tmp,mkpts1_tmp,mconf_tmp]
     return mkpts
+
+# 归一化打分
+def rating(respath):
+    all_RMSE = 0
+    all_score = 0
+    # 统计总分
+    for path, dirnames, filenames in os.walk(respath):
+        for dir in dirnames:
+            numb = dir.split('&')
+            all_score += float(numb[-2])
+            all_RMSE += float(numb[-3])
+    # 呈现总分
+    for path, dirnames, filenames in os.walk(respath):
+        for dir in dirnames:
+            dir_raw = dir.split('&')[0]
+            numb = dir.split('&')
+            score = float(numb[-2]) / all_score
+            RMSE = float(numb[-3]) / all_RMSE
+            rate = score / RMSE
+            os.rename(respath + str(dir)+ '/', respath + str(dir_raw) + '_' + str(rate) + '/')
+
 
 # 进行处理
 def process(userpath, datapath, respath, mask_outpath):
@@ -130,17 +150,15 @@ def process(userpath, datapath, respath, mask_outpath):
     db_file_path = datapath
     user_file_path = userpath
     for dirpath, db_dirnames, filenames in os.walk(db_file_path):
-        print(db_dirnames)
         for db_dir in db_dirnames:
             db_images_path = glob.glob(os.path.join(db_file_path + db_dir + '/' + '*.png'))
-            print(db_images_path)
             user_images_path = glob.glob(os.path.join(user_file_path + '*.png'))
             mask_images_path = glob.glob(os.path.join(mask_outpath + '*.png'))
             for j in user_images_path:
                 j = Unipath(j)
-                m = 0
                 # 记录最佳评分
                 bestscore = 0
+                bestRMSE = 0
                 # 清理并建立输出文件夹
                 outputpath(respath, db_dir)
                 for i in db_images_path:
@@ -168,8 +186,13 @@ def process(userpath, datapath, respath, mask_outpath):
                     mkpts0 = mkpts[0]
                     mkpts1 = mkpts[1]
                     mconf = mkpts[2]
-                    score = avg_score(mconf) * len(mkpts0)
-                    RMSE = Euc_distance(mkpts0, mkpts1)
+
+                    # 如果有匹配点，返回评分，否则得分为0
+                    try:
+                        score = avg_score(mconf) * len(mkpts0)
+                        RMSE = Euc_distance(mkpts0, mkpts1)
+                    except:
+                        score = 0
 
                     # 绘制匹配结果
                     color = cm.jet(mconf, alpha=0.7)
@@ -178,12 +201,15 @@ def process(userpath, datapath, respath, mask_outpath):
                         'Matches: {}'.format(len(mkpts0)),
                     ]
                     # 记录最高分
-                    bestscore = getBestscore(bestscore,score)
+                    bestscore, bestRMSE = getBestscore(bestscore,bestRMSE,score,RMSE)
                     # 输出结果
-                    fig = make_matching_figure(img0_raw, img1_raw, mkpts0, mkpts1, color, mkpts0, mkpts1, path=respath + str(db_dir)+ '/' + str(m) + '_' + str(len(mkpts0)) + "_" + str(score) + "_" + str(RMSE)+".png")
-                    m += 1
+                    # 截取角度
+                    i = i.split('_')[-1]
+                    i = i.split('.')[0]
+                    fig = make_matching_figure(img0_raw, img1_raw, mkpts0, mkpts1, color, mkpts0, mkpts1, path=respath + str(db_dir)+ '/' + str(i) + "_" + str(score) + "_" + str(RMSE)+".png")
+            
                 
-                # 修改文件夹名称
-                os.rename(respath + str(db_dir)+ '/', respath + str(db_dir) + '_' + str(bestscore) + '/')
+                # 修改文件夹名称,可以按照&分割
+                os.rename(respath + str(db_dir)+ '/', respath + str(db_dir) + '&' + str(bestscore) + '&' + str(bestRMSE) + '&' + '/')
                 # 完成后回报
                 print('目标匹配完成')
