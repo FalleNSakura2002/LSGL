@@ -143,6 +143,9 @@ def rating(respath):
 
 # 进行处理
 def process(userpath, datapath, respath, mask_outpath):
+    # 构建输出文件夹
+    datapath = datapath + 'downloadPic/'
+
     # 清理文件夹
     clean(respath)
     

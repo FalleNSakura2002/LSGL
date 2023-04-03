@@ -48,7 +48,7 @@ def imgscene(mask):
     
     
 # 处理文件
-def proceed(mask, inp, inp_typ, segmodel):
+def proceed(mask, inp, segmodel):
     # 检查路径
     checkdoc(mask)
     checkdoc(inp)
