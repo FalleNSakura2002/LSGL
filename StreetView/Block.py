@@ -7,10 +7,9 @@ import os
 # 重置路径的方法
 def chekdir(path):
     try:
-        shutil.rmtree(path)
         os.mkdir(path)
     except:
-        os.mkdir(path)
+        print('文件夹已存在')
 
 # 检查是否有结果
 def chekres(path):
