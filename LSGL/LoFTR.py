@@ -10,6 +10,7 @@ import os
 import shutil
 import math
 import csv
+import pandas as pd
 
 from PIL import Image
 from src.utils.plotting import make_matching_figure
@@ -219,30 +220,44 @@ def process(userpath, datapath, respath, mask_outpath):
                 print('目标匹配完成')
 
 # 将结果输出至CSV
-def write_res(res_path, csv_path):
+def write_res(res_path, res_level):
+    # 重组表结果路径
+    res_level = res_path + str(res_level) + '.csv'
     # 获取结果
     mult_res = []
-    single_res = []
     for respath, res_dirnames, resnames in os.walk(res_path):
         for res in res_dirnames:
             res = res.split('_')
-            single_res[0] = res[-2]
-            single_res[1] = res[-1]
+            single_res = []
+            single_res.append(res[-2])
+            single_res.append(res[-1])
             mult_res.append(single_res)
+            print(mult_res)
             ### 将匹配结果写入表
 
-    with open(position_csv, 'r') as data:
-        lines = data.readlines()[1:]
-        for line in lines:
-            line = line.strip()
-            rid = line.split(',')[0]
-            wgslon = float(line.split(',')[1])
-            wgslat = float(line.split(',')[2])
-            if rid not in filelist:  # 已有直接跳过
-                s = time.time()
-                if random.random() < 0.2:  # 0.2 的概率需要sleep
-                    time.sleep(random.random() * 2)  # 随机休息0-2秒
-                try:
-                    lon_lat_to_img(wgslon, wgslat, rid, input_params)
-                except Exception as e:
-                    print(rid, repr(e))
+    with open(res_level, 'w') as data:
+        writer = csv.writer(data)
+        header = ['pid', 'res']
+        writer.writerow(header)
+        writer.writerows(mult_res)
+
+# 读取最优结果与pid
+def bestpid(res_level, tmp_path, res_path, roundnum):
+    # 重组路径
+    res_path = res_path + 'csv_files/success.csv'
+    # 重组表结果路径
+    res_level = tmp_path + str(res_level) + '.csv'
+    # 读取pid表
+    pids = pd.read_csv(res_path, header=0, usecols=['pid', 'x', 'y']).values
+    # 读取匹配结果pid
+    res = pd.read_csv(res_level, header=0)
+    res = res.sort_values(by=['res'], ascending=False)
+    res = res.values[roundnum][0]
+    # 查询pid结果对应的xy
+    for pid in pids:
+        if pid[2] == res:
+            return pid[0], pid[1]
+        else:
+            return 0, 0
+            
+
