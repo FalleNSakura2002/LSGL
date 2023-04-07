@@ -1,5 +1,5 @@
 import requests, json, re, os, random, time, math, csv
-import shutil
+import shutil, time
 
 x_pi = 3.14159265358979324 * 3000.0 / 180.0
 pi = 3.1415926535897932384626  # π
@@ -36,11 +36,7 @@ MC2LL = [[1.410526172116255e-8, 0.00000898305509648872, -1.9939833816331, 200.98
           -0.02145144861037, -0.00001234426596, 0.00010322952773, -0.00000323890364, 826088.5]]
 
 def chekdir(path):
-    try:
-        shutil.rmtree(path)
-        os.mkdir(path)
-    except:
-        os.mkdir(path)
+    os.mkdir(path)
 
 def gcj02tobd09(lng, lat):
     """
@@ -498,8 +494,8 @@ def getPic(outpath, position_csv):
         os.mkdir(outpath)
     filelist = os.listdir(outpath)
     # 检查文件夹是否存在,同时清理文件夹
-    chekdir(f"{input_params['outpath']}/csv_files")
-    chekdir(f"{input_params['outpath']}/downloadPic")
+    chekdir(f"{input_params['outpath']}csv_files")
+    chekdir(f"{input_params['outpath']}downloadPic")
     # 打开坐标csv文件
     with open(position_csv, 'r') as data:
         lines = data.readlines()[1:]

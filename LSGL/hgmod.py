@@ -14,12 +14,6 @@ import shutil
 def Unipath(path):
     path = path.replace('\\','/')
     return path
-
-# 检查文件夹是否存在
-def checkdoc(filepath):
-    if not os.path.exists(filepath):
-        os.mkdir(filepath)
-        
         
 # 清理内存
 def release_memory(segmodel):

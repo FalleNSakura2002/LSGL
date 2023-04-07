@@ -13,6 +13,7 @@ def chekdir(path):
 
 # 检查是否有结果
 def chekres(path):
+    path = path + 'downloadPic/'
     if  len(os.listdir(path)) > 0:
         return 1
     else:

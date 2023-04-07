@@ -11,6 +11,7 @@ import shutil
 import math
 import csv
 import pandas as pd
+import time
 
 from PIL import Image
 from src.utils.plotting import make_matching_figure
@@ -29,10 +30,12 @@ def Unipath(path):
 
 # 清理文件夹
 def clean(filepath):
+    filepath = filepath[:-1]
     if not os.path.exists(filepath):
         os.mkdir(filepath)
     else:
         shutil.rmtree(filepath)
+        time.sleep(0.1)
         os.mkdir(filepath)
 
 # 建立输出文件夹
@@ -232,9 +235,7 @@ def write_res(res_path, res_level):
             single_res.append(res[-2])
             single_res.append(res[-1])
             mult_res.append(single_res)
-            print(mult_res)
-            ### 将匹配结果写入表
-
+    # 将匹配结果写入表
     with open(res_level, 'w') as data:
         writer = csv.writer(data)
         header = ['pid', 'res']
@@ -243,6 +244,9 @@ def write_res(res_path, res_level):
 
 # 读取最优结果与pid
 def bestpid(res_level, tmp_path, res_path, roundnum):
+    x = 0
+    y = 0
+    best_score = 0
     # 重组路径
     res_path = res_path + 'csv_files/success.csv'
     # 重组表结果路径
@@ -252,12 +256,14 @@ def bestpid(res_level, tmp_path, res_path, roundnum):
     # 读取匹配结果pid
     res = pd.read_csv(res_level, header=0)
     res = res.sort_values(by=['res'], ascending=False)
-    res = res.values[roundnum][0]
+    res_pid = res.values[roundnum][0]
+    res_score = res.values[roundnum][1]
     # 查询pid结果对应的xy
     for pid in pids:
-        if pid[2] == res:
-            return pid[0], pid[1]
-        else:
-            return 0, 0
+        if pid[2] == res_pid:
+            x = pid[0]
+            y = pid[1]
+            best_score = res_score
+    return x, y, best_score
             
 
