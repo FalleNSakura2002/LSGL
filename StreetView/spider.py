@@ -413,7 +413,7 @@ def sid_to_date_img(sid, trueX, trueY, wgslon, wgslat, rid, input_params):
                 open(savepath, 'wb').write(r.content)
 
         # 写入点位置
-        succes_to_csv(rid, trueX, trueY, timeid, output_folder, csv_file_name, input_params)
+        succes_to_csv(rid, trueX, trueY, wgslon, wgslat, timeid, output_folder, csv_file_name, input_params)
         # 写入日志
         with open('xy_sid2.txt', 'a') as f:
             f.write("{0},{1},{2}\n".format(trueX, trueY, timeid))
@@ -427,10 +427,10 @@ def sid_to_date_img(sid, trueX, trueY, wgslon, wgslat, rid, input_params):
 
 
 #将成功获取的坐标点输出到csv，并且删除掉重复的街景的影像图
-def succes_to_csv(rid, trueX, trueY, timeid, output_folder, csv_file_name, input_params):
+def succes_to_csv(rid, trueX, trueY, wgslon, wgslat, timeid, output_folder, csv_file_name, input_params):
     csv_file_path = f"{input_params['outpath']}/{output_folder}/{csv_file_name}"
     with open(csv_file_path, mode='a+', newline='') as csv_file:
-        fieldnames = ['id', 'x', 'y', 'pid', 'url']
+        fieldnames = ['id', 'x', 'y', 'wgsx', 'wgsy', 'pid', 'url']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         url ='https://map.baidu.com/@' + str(trueX) + ',' + str(trueY)+','+'21z,87t,-68.51h#'+'panoid=' + str(timeid)+'&panotype=street&heading=68.51&pitch=0&l=21&tn=B_NORMAL_MAP&sc=0&newmap=1&shareurl=1&pid='+str(timeid)
 
@@ -448,7 +448,7 @@ def succes_to_csv(rid, trueX, trueY, timeid, output_folder, csv_file_name, input
                         # A row with the same pid already exists
                         return  # exit function without writing new row
         # Write new row
-        writer.writerow({'id': rid, 'x': trueX, 'y': trueY, 'pid': timeid, 'url': url})
+        writer.writerow({'id': rid, 'x': trueX, 'y': trueY, 'wgsx': wgslon, 'wgsy': wgslat, 'pid': timeid, 'url': url})
 
 
 # 百度坐标得到街景图片

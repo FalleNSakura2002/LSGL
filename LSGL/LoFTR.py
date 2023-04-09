@@ -140,9 +140,12 @@ def rating(respath):
         for dir in dirnames:
             dir_raw = dir.split('&')[0]
             numb = dir.split('&')
-            score = float(numb[-2]) / all_score
-            RMSE = float(numb[-3]) / all_RMSE
-            rate = score / RMSE
+            try:
+                score = float(numb[-2]) / all_score
+                RMSE = float(numb[-3]) / all_RMSE
+                rate = score / RMSE
+            except:
+                rate = 0
             os.rename(respath + str(dir)+ '/', respath + str(dir_raw) + '_' + str(rate) + '/')
 
 
@@ -252,7 +255,7 @@ def bestpid(res_level, tmp_path, res_path, roundnum):
     # 重组表结果路径
     res_level = tmp_path + str(res_level) + '.csv'
     # 读取pid表
-    pids = pd.read_csv(res_path, header=0, usecols=['pid', 'x', 'y']).values
+    pids = pd.read_csv(res_path, header=0, usecols=['pid', 'wgsx', 'wgsy']).values
     # 读取匹配结果pid
     res = pd.read_csv(res_level, header=0)
     res = res.sort_values(by=['res'], ascending=False)

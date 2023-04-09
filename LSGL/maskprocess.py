@@ -4,6 +4,7 @@ import glob
 import numpy as np
 import cv2
 import os
+import time
 
 # 获取遮罩图片
 def getmask(maskpic):
@@ -68,7 +69,9 @@ def proceed(mask, inp, segmodel):
         mask = np.array(mask.convert('L'))
         if segmodel == 'maskformer-swin-large-ade':
             mask = np.where(mask[...,:] == 255, 0, mask)
-            mask = np.where(mask[...,:] == 254, 255, 0)
+            mask = np.where(mask[...,:] == 244, 255, mask)
+            mask = np.where(mask[...,:] == 254, 255, mask)
+            mask = np.where(mask[...,:] == 255, 255, 0)
         else:
             mask = np.where((mask[...,:] > 243)&(mask[...,:] < 255), 0, 255)
 
